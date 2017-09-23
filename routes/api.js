@@ -80,4 +80,45 @@ const auth = function(req, res, next) {
     }
 };
 
+router.post('/message', function(req, res, next) {
+    User.findOne({username: req.body.username}, function(err, user) {
+        if (!user) {
+            res.json({
+                success: false,
+                messsage: 'No user found',
+            });
+        } else {
+            let newMessage = new Message({
+                sender_id: req.body.sender_id,
+                receiver_id: user._id,
+                content: req.body.content,
+                createdAt: new Date(),
+                name: user.name
+            });
+
+            newMessage.save(function(err, user) {
+                if (err) throw err;
+                res.json({
+                    success: true,
+                    message: 'Message sent successfully',
+                });
+            });
+        }
+    })
+})
+
+router.get('/messages/:id', auth, function(req, res, next) {
+    Promise.all([Message.find({receiver_id: req.params.id}),
+                 Message.find({sender_id: req.params.id})])
+                .then(data => {
+                    let received = data[0];
+                    let sent = data[1];
+
+                    res.json({
+                        received: received,
+                        sent: sent,
+                    });
+                });
+});
+
 module.exports = router;
